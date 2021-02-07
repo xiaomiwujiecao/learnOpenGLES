@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>prepare</title>
+</head>
+<body onload="OnDOMLoaded()">
+  <canvas id="glcanvas" class="box">
+    你的浏览器似乎不支持或者禁用了HTML5 <code>&lt;canvas&gt;</code> 元素.
+  </canvas>
+</body>
+<script>
+  function OnDOMLoaded(){
+    const CANVAS = document.getElementById('glcanvas')
+    const GL_CONTEXT = CANVAS.getContext('webgl')
+    if (!GL_CONTEXT){
+      alert('无法初始化WEBGL，你的浏览器或OS不支持')
+      return
+    }
+
+    // 使用不透明全黑抹掉一切
+    GL_CONTEXT.clearColor(0, 0, 0, 1)
+    // 清除缓冲区
+    GL_CONTEXT.clear(GL_CONTEXT.COLOR_BUFFER_BIT)
+  }
+</script>
+</html>
