@@ -140,3 +140,109 @@ const fsSource = `
     }
   `;
 ```
+
+## 初始化着色器
+
+着色器 -> WEBGL -> 编译 -> 检查是否编译成功 -> 返回编译的着色器
+
+
+```html
+<script>
+  const vsSource = `
+    attribute vec4 aVertexPosition;
+
+    uniform mat4 uModelViewMatrix;
+    uniform mat4 uProjectionMatrix;
+
+    void main() {
+      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+    }
+  `;
+
+  const fsSource = `
+    void main() {
+      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }
+  `;
+
+
+  function OnDOMLoaded() {
+    const CANVAS = document.getElementById('glcanvas')
+    const GL_CONTEXT = CANVAS.getContext('webgl')
+    if (!GL_CONTEXT) {
+      alert('无法初始化WEBGL，你的浏览器或OS不支持')
+      return
+    }
+
+    // 使用不透明全黑抹掉一切
+    GL_CONTEXT.clearColor(0, 0, 0, 1)
+    // 清除缓冲区
+    GL_CONTEXT.clear(GL_CONTEXT.COLOR_BUFFER_BIT)
+
+    // 调用代码
+    const shaderProgram = initShaderProgram(GL_CONTEXT, vsSource, fsSource);
+
+  }
+
+  // 创建指定类型的着色器，上传 source 源码并编译
+  function loadShader(glContext, type, source) {
+    // 创建着色器
+    const shader = glContext.createShader(type);
+    // 将源发送到着色器对象
+    glContext.shaderSource(shader, source);
+    // 编译着色器程序
+    glContext.compileShader(shader);
+    // 查看是否成功编译
+    if (!glContext.getShaderParameter(shader,glContext.COMPILE_STATUS)) {
+      alert('编译着色器时发生错误: ' + glContext.getShaderInfoLog(shader));
+      glContext.deleteShader(shader);
+      return null;
+    }
+    return shader;
+  }
+
+  // 初始化着色器程序，让WebGL知道如何绘制我们的数据
+  function initShaderProgram(glContext, vsSource, fsSource) {
+    const vertexShader = loadShader(glContext, glContext.VERTEX_SHADER, vsSource);
+    const fragmentShader = loadShader(glContext, glContext.FRAGMENT_SHADER, fsSource);
+    // 创建着色器程序
+    const shaderProgram = glContext.createProgram();
+    glContext.attachShader(shaderProgram, vertexShader);
+    glContext.attachShader(shaderProgram, fragmentShader);
+    glContext.linkProgram(shaderProgram);
+    // 如果创建失败，那么提示
+    if (!glContext.getProgramParameter(shaderProgram,glContext.LINK_STATUS)) {
+      alert('无法初始化着色器程序: ' + glContext.getProgramInfoLog(shaderProgram));
+      return null;
+    }
+    return shaderProgram;
+  }
+  
+</script>
+```
+
+### 查找WebGL返回分配的输入位置
+
+uniform:
+
+- 类似于JavaScript全局变量
+- 着色器迭代不会影响
+
+attribute:
+
+- 属性从缓冲区接收值
+- 顶点着色器的每次迭代都从分配给该属性的缓冲区接收下一个值
+
+
+我们会用到名字为 `initBuffers()` 的函数。
+
+- 调用 `gl` 的成员函数 `createBuffer()` 得到了缓冲对象并存储在顶点缓冲器
+- 调用 `bindBuffer()` 函数绑定上下文
+- 转化为 `WebGL` 浮点型类型的数组
+- 传到 `gl` 对象的  `bufferData()` 方法来建立对象的顶点
+- 当着色器和物体都创建好后，我们可以开始渲染这个场景
+
+
+[正方形绘制](square.html)
+
+
